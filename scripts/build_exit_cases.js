@@ -1,0 +1,17 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),E=require('../assets/engine.js');
+const root=path.resolve(__dirname,'..'),ctx={window:{}};
+vm.runInNewContext(fs.readFileSync(path.join(root,'data/catalog.js'),'utf8'),ctx);
+const ds=ctx.window.CTA_CATALOG.datasets.find(x=>x.id==='BTCUSDT_1d');
+if(!ds)throw Error('BTC daily dataset missing');
+vm.runInNewContext(fs.readFileSync(path.join(root,ds.file),'utf8'),ctx);
+const pack=ctx.window.CTADATA[ds.id],bars=E.unpack(pack);
+const parameters={...E.DEFAULTS,strategy:'boll_break',start:'2024-01-01',end:'2026-09-28',exitMode:'replace',reentry:'fresh',allowShort:false};
+const rows=E.compareExits(bars,pack.meta,parameters),pct=x=>(100*x).toFixed(2)+'%';
+const report={engineVersion:E.VERSION,dataset:ds.id,dataSha256:ds.sha256,parameters,rows};
+fs.writeFileSync(path.join(root,'docs/exit-example-results.json'),JSON.stringify(report,(_,v)=>v===Infinity?'Infinity':v,2));
+let md='# 同一突破入场，不同退出方式\n\n由 `node scripts/build_exit_cases.js` 对实际数据重新运行生成，不为这次展示挑最优参数。\n\n## 固定口径\n\nBTC日线，2024-01-01—2026-09-28，布林突破N=20、K=2，只多/空仓，初始本金1,000,000 USDT，入场预算100%，单边手续费3bps、滑点2bps。原退出为收盘穿回中轨；新退出替换原正常退出。保护退出后等待同方向条件先失效再出现。ATR14、倍数3；吊灯回看持仓内22根；百分比5%；倒数实验基础5%、下限1%、上限20%。所有线只在收盘更新供后续K线使用；区间末尾估值平仓。\n\n## 当前快照运行结果\n\n| 退出 | 区间净收益 | 最大回撤 | 交易次数 | 胜率 |\n|---|---:|---:|---:|---:|\n';
+for(const r of rows)md+=`| ${r.name} | ${pct(r.total)} | ${pct(-r.maxDD)} | ${r.trades} | ${r.winRate==null?'—':pct(r.winRate)} |\n`;
+md+='\n## 怎样解释\n\n同一个入场算法可以形成不同收益路径。不能因为某种退出在这段历史中更高就认定其普遍更优。应当同时观察少回吐、提前离场错失趋势、额外交易成本和回撤变化。\n\n这是完整系统对照，不是固定每笔入场价的配对实验：退出改变占仓状态，因此后续实际入场集合也可能改变。结果已经参与观察，不再是未看过的样本外。需要其他时段和品种检验。\n\n倒数实验严格定义为 `clip(基础回撤比例×入场ATR%/当前ATR%, 下限, 上限)`，不是原框架已确认实现，也不是逆波动率仓位。波动放大时它收紧允许回撤，和ATR距离扩大的机制不同。\n\n原始参数、数据哈希和完整指标见 [结果JSON](exit-example-results.json)；逐笔交易可在页面选择对应设置并导出。\n';
+fs.writeFileSync(path.join(root,'docs/EXIT_CASES.md'),md);
+console.log(rows.map(r=>({exit:r.name,total:pct(r.total),drawdown:pct(-r.maxDD),trades:r.trades})));
