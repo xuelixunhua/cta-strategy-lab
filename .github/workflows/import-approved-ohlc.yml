@@ -1,0 +1,54 @@
+name: Import approved teaching OHLC
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/import-approved-ohlc.yml]
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtain exactly the approved data-only artifact
+        env:
+          APPROVED_OHLC_URL: 'https://sdmntprcentralus.oaiusercontent.com/files/00000000-42a8-81f5-99ee-9d4f5389b918/raw?se=2026-09-29T15%3A28%3A45Z&sp=r&sv=2026-02-06&sr=b&scid=c1c840ad-c1be-5ce9-9bdf-67bc57924949&skoid=5e713cdb-766b-475e-a3ca-8adb6cf99aa0&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-29T14%3A17%3A55Z&ske=2026-09-30T14%3A17%3A55Z&sks=b&skv=2026-02-06&sig=S4uUnXUl5xiyS6xM0DTFxB5uxyM0Vh%2B3MTF4%2BlwFjQE%3D'
+        run: |
+          python - <<'PY'
+          import os,urllib.request,hashlib,zipfile,io
+          from pathlib import Path
+          expected={'china_indices__sh000001_1d.json','china_indices__sh000016_1d.json','china_indices__sh000300_1d.json','china_indices__sh000852_1d.json','china_indices__sh000905_1d.json','china_indices__sz399001_1d.json','china_indices__sz399006_1d.json','crypto__BTCUSDT_spot_1h.json','crypto__ETHUSDT_spot_1h.json','export-manifest.json','futures__jm__contracts_1h.json','us__AAPL_1d.json','us__DOW_1d.json','us__MSFT_1d.json','us__NASDAQ_1d.json','us__NVDA_1d.json','us__QQQ_1d.json','us__SP500_1d.json','us__SPY_1d.json'}
+          with urllib.request.urlopen(os.environ['APPROVED_OHLC_URL'],timeout=60) as r: blob=r.read(20000000)
+          assert hashlib.sha256(blob).hexdigest()=='0a28aa2d13d92184de69375bfdde65df1d3de71b1cb5c212d935777d82e6963f','Artifact hash differs'
+          archive=zipfile.ZipFile(io.BytesIO(blob))
+          assert set(archive.namelist())==expected,'Unexpected file in data-only artifact'
+          assert sum(x.file_size for x in archive.infolist())<100000000
+          out=Path('/tmp/approved-teaching-ohlc');out.mkdir()
+          for name in sorted(expected): (out/name).write_bytes(archive.read(name))
+          print('Verified 18 OHLC datasets and the provenance manifest; no framework or private configuration files.')
+          PY
+      - name: Install export-only dependencies
+        run: python -m pip install -r requirements-export.txt
+      - name: Build public data and reproduce tests
+        run: |
+          python scripts/build_data.py --source /tmp/approved-teaching-ohlc
+          node --test tests/*.test.js
+          node scripts/audit_data.js
+          node scripts/build_cases.js
+          node scripts/build_exit_cases.js
+      - name: Commit only generated public teaching files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data docs/data-audit-results.json docs/CASE_STUDIES.md docs/example-results.json docs/EXIT_CASES.md docs/exit-example-results.json
+          git commit -m 'data: publish verified OHLC packs and reproducible CTA teaching cases'
+          git push origin HEAD:main
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-import-reports
+          path: |
+            docs/data-audit-results.json
+            docs/CASE_STUDIES.md
+            docs/EXIT_CASES.md
+          retention-days: 7
