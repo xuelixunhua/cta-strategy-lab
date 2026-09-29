@@ -2,15 +2,15 @@
 
 从一根均线到一套可解释的技术交易系统。用实际历史行情观察问题、改变规则，再回到每一笔交易验证。
 
-**版本 1.1**：新增 SF01 通道、两版 SuperTrend，以及独立的吊灯、百分比、ATR和波动率倒数退出。公开项目独立开发，不是私有研究仓库镜像。
+**版本1.1源码已提交，线上部署尚未完成：目前还缺数据包入库和首次启用Pages。** 源码写入不等于网页上线。具体操作见 [部署说明](docs/DEPLOYMENT.md)。
 
-## 1. 打开实验室
+## 1. 首次发布
 
-GitHub Pages 目标地址：**https://xuelixunhua.github.io/cta-strategy-lab/**。是否已经上线，以本仓库 Actions 中 `Deploy CTA Strategy Lab` 的成功记录为准。
+先在 [Settings → Pages](https://github.com/xuelixunhua/cta-strategy-lab/settings/pages) 把Source设为 **GitHub Actions**。再将提供的 **cta-public-ohlc-export.zip**（约7.4MB）原样上传到[仓库根目录](https://github.com/xuelixunhua/cta-strategy-lab/upload/main)，不需要解压或上传任何源码。
 
-首次需要仓库所有者在 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**；应用集成的文件写权限不等于首次启用 Pages 的管理权限。设置后在 Actions 运行部署工作流。后续 main 更新自动测试和部署。
+提交后工作流会校验数据、构建89组行情、测试账目、生成案例并尝试部署。只有Actions中的 **Deploy CTA Strategy Lab** 最后Deploy步骤成功，才可认定目标网址 **https://xuelixunhua.github.io/cta-strategy-lab/** 已上线。
 
-也可克隆后执行 `python -m http.server 8000`，打开 http://localhost:8000。浏览器不需要账号、API密钥或服务端计算，行情按标的按需加载；不包含实盘下单。
+浏览器不需要账号、API密钥或服务端计算；运行不依赖私有仓库，不包含实盘下单。完整工程包有data目录时可以直接 `python -m http.server 8000`；纯源码克隆先按部署说明准备行情。
 
 ## 2. 从简单规则到交易系统
 
@@ -26,39 +26,37 @@ GitHub Pages 目标地址：**https://xuelixunhua.github.io/cta-strategy-lab/**�
 
 ## 3. 入场不变，单独研究退出
 
-在左侧启用独立退出模块，选择收盘ATR、吊灯、百分比或波动率倒数实验。可选择叠加原退出，或替换原正常退出；再入场分为条件持续即可重进与等待条件先失效再出现。
+启用独立退出模块，选择收盘ATR、吊灯、百分比或波动率倒数实验；选择叠加原退出，或替换原正常退出；再入场分为条件持续即可重进与等待条件先失效再出现。
 
-下方“退出对比”固定已运行的入场算法，比较原规则与四种保护退出。退出改变持仓状态，因此后续实际入场集合也可能改变，不能称严格逐笔配对。所有保护线只由已完成K线更新、多头只上移、空头只下移；跳空按更差开盘退出。
+“退出对比”固定已运行的入场算法，比较原规则与四种保护退出。退出改变持仓状态，后续实际入场集合也可能改变，不能称严格逐笔配对。保护线只由已完成K线更新、多头只上移、空头只下移；跳空按更差开盘退出。
 
-准确公式与版本差异见 [策略与退出定义](docs/STRATEGIES_AND_EXITS.md)。波动率倒数被明确标为实验定义，不冒充行业标准或原研究策略复刻，也不等同于逆波动率仓位。
+[策略与退出定义](docs/STRATEGIES_AND_EXITS.md) · [退出案例结果](docs/EXIT_CASES.md)
 
-## 4. 数据、复权与案例
+波动率倒数明确标为实验定义，不冒充行业标准或原研究策略复刻，也不等同于逆波动率仓位。
 
-行情快照日期2026-09-29，52个标的、89组标的×周期。包含BTC/ETH现货、7个A股指数、8个美股/ETF/指数、34个JM实际合约及1个教学连续系列；不是52个独立期货品种。没有小时源的指数和股票禁用小时切换，不制造数据。
+## 4. 数据、复权与展示
 
-焦煤信号价格采用因果比例衔接，盈亏按真实旧合约平旧、新合约开新并计两侧摩擦；7次换月有审计记录。有限样本不能称作官方主力连续。股票/ETF全部OHLC统一调整，指数是不可直接成交的价格代理。
+完整行情快照日期2026-09-29，共52个标的、89组标的×周期：BTC/ETH现货、7个A股指数、8个美股/ETF/指数、34个JM实际合约及1个教学连续系列。不是52个独立期货品种。没有小时源的指数和股票禁用小时切换，不制造数据。数据包目前仍需按首节导入。
 
-K线与辅助线、保护线共用坐标，成交可点击定位；逐笔显示毛净盈亏、成本、浮盈浮亏与回吐，支持CSV及完整实验JSON导出。案例由真实回测生成，不使用合成行情冒充案例。
+焦煤信号价格采用因果比例衔接，盈亏按实际旧合约平旧、新合约开新并计两侧摩擦；7次换月有审计记录。有限样本不能称作官方主力连续。股票/ETF全部OHLC统一调整，指数是不可直接成交的价格代理。
 
-[方法与边界](docs/METHODOLOGY.md) · [固定参数案例](docs/CASE_STUDIES.md) · [退出对比案例](docs/EXIT_CASES.md) · [数据政策](docs/DATA_POLICY.md)
+K线、指标和保护线共用坐标，成交可点击定位；逐笔显示毛净盈亏、成本、浮盈浮亏与回吐，支持CSV及完整实验JSON导出。案例由真实数据运行，不以合成行情替代。
+
+[方法与边界](docs/METHODOLOGY.md) · [数据政策](docs/DATA_POLICY.md)
 
 ## 5. 维护与验证
 
 ```bash
-npm test
-npm run test:data
-npm run cases
+node --test tests/*.test.js
+node scripts/audit_data.js
+node scripts/build_cases.js
+node scripts/build_exit_cases.js
 ```
 
-Node 20以上，无npm运行时依赖。当前基线为36项单元测试，89组数据、1602次全历史实现检查；这不证明策略有盈利优势或可实盘成交。数据重建只需 Python 与 `requirements-export.txt` 中依赖：
+Node20以上，无npm运行时依赖。本地完整快照已通过36项单元测试、89组数据的1602次全历史实现检查；远端数据验收需要数据导入后运行。这不是策略盈利或实盘可成交性证明。
 
-```bash
-python -m pip install -r requirements-export.txt
-python scripts/build_data.py --source /path/to/approved-ohlc-artifact
-```
+`assets/engine.js` 管规则和账目；`charts.js` 只画图；`app.js` 管交互；`scripts/` 管导出、审计和案例生成；`tests/` 管确定性验证；`docs/` 管准确定义与边界。
 
-`assets/engine.js` 管规则和账目；`charts.js` 只画图；`app.js` 管交互；`scripts/` 管数据审计和案例生成；`tests/` 管确定性验证；`docs/` 管定义、结果和未完成事项。
-
-代码与原创说明采用MIT许可；行情不在MIT范围。公开再分发权利由发布者按数据提供方条款确认。未复制私有配置、凭证、第三方框架源码或私有Git历史。
+代码与原创说明采用MIT许可；行情不在MIT范围。公开再分发权利由发布者按提供方条款确认。未复制私有配置、凭证、第三方框架源码或私有Git历史。
 
 **仅供研究与教学，不构成投资建议。** 未模拟真实订单簿、涨跌停可成交性、历史保证金强平、借券与资金费，不能直接作为实盘系统。

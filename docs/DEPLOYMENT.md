@@ -1,0 +1,33 @@
+# 部署状态与首次发布
+
+## 当前状态
+
+v1.1网站源码、八种入场/基础规则、五种退出对比、测试及数据构建脚本已经提交公有仓库。**不能据此认定网页已上线。** 本次自动发布有两个已验证的阻碍：首次创建Pages站点被GitHub应用权限拒绝；跨平台下载数据专用临时链接返回403，行情包尚未进入公有仓库。
+
+旧的临时链接导入工作流已移除。最终流程不保存或使用私有GitHub访问令牌，也不让网页访问私有仓库。
+
+## 两项一次性操作
+
+先打开 https://github.com/xuelixunhua/cta-strategy-lab/settings/pages ，把 Build and deployment 的 Source 设为 **GitHub Actions**。
+
+再将提供的 **cta-public-ohlc-export.zip** 上传到仓库根目录，保留这个文件名，不解压，不上传整份私有研究仓库。网页上传入口：https://github.com/xuelixunhua/cta-strategy-lab/upload/main 。文件为7,357,473字节，SHA256为 `0a28aa2d13d92184de69375bfdde65df1d3de71b1cb5c212d935777d82e6963f`，只含18份行情JSON及1份来源清单。
+
+上传提交会触发已配置的Pages工作流：核验ZIP哈希和文件白名单→生成89组行情→运行单元测试及全数据账目核对→生成案例→打包静态网站→部署Pages。任一步失败会停止，不用假数据兜底。生成的数据位于部署产物中，不需要把41MB编译后JS再次提交进Git历史。
+
+## 判断是否成功
+
+在仓库Actions查看 **Deploy CTA Strategy Lab** 的最新运行，只有Deploy步骤成功才算上线。目标地址是 https://xuelixunhua.github.io/cta-strategy-lab/ 。如果已先上传数据而尚未开启Pages，开启后在该工作流点击Run workflow重新运行。
+
+## 本地运行
+
+已有完整工程包及data目录时，直接 `python -m http.server 8000`。只有仓库源码时，先将数据ZIP放根目录，再执行：
+
+```bash
+python -m pip install -r requirements-export.txt
+python scripts/prepare_data.py
+node --test tests/*.test.js
+node scripts/audit_data.js
+python -m http.server 8000
+```
+
+行情许可独立于代码许可；公开上传前由发布者确认相应数据再分发授权。构建脚本只处理经过核验的行情文件，不上传账户、配置或框架源代码。

@@ -13,7 +13,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -21,21 +21,36 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Check complete site
+      - name: Unit tests
+        run: node --test tests/*.test.js
+      - name: Check data input
         run: |
-          test -f index.html
-          test -f assets/engine.js
-          test -f data/catalog.js
-          node --test tests/*.test.js
+          if [ ! -f data/catalog.js ] && [ ! -f cta-public-ohlc-export.zip ]; then
+            echo '::error::Upload cta-public-ohlc-export.zip to the repository root. Source code is present, but market data has not been imported.'
+            exit 1
+          fi
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare approved market packs
+        run: |
+          python -m pip install -r requirements-export.txt
+          python scripts/prepare_data.py
+      - name: Audit and reproduce examples
+        run: |
           node scripts/audit_data.js
+          node scripts/build_cases.js
+          node scripts/build_exit_cases.js
           mkdir -p _site
-          cp index.html _site/
+          cp index.html README.md LICENSE _site/
           cp -r assets data docs _site/
-          cp README.md LICENSE _site/
           touch _site/.nojekyll
+      - uses: actions/upload-artifact@v4
+        with:
+          name: built-site-and-validation
+          path: _site
+          retention-days: 7
+      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

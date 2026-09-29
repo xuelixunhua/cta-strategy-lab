@@ -7,19 +7,39 @@ on:
 permissions:
   contents: read
 jobs:
-  verify:
+  unit:
+    name: Deterministic engine tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: node --test tests/*.test.js
+  data:
+    name: Historical data and accounting audit
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Unit tests
-        run: node --test tests/*.test.js
-      - name: Dataset and accounting audit
-        run: node scripts/audit_data.js
-      - name: Reproduce worked examples
+      - name: Check data input
         run: |
+          if [ ! -f data/catalog.js ] && [ ! -f cta-public-ohlc-export.zip ]; then
+            echo '::error::Approved OHLC data is not yet in the repository. Upload the data-only ZIP described in docs/DEPLOYMENT.md.'
+            exit 1
+          fi
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build approved data
+        run: |
+          python -m pip install -r requirements-export.txt
+          python scripts/prepare_data.py
+      - name: Verify and reproduce research results
+        run: |
+          node scripts/audit_data.js
           node scripts/build_cases.js
           node scripts/build_exit_cases.js
       - uses: actions/upload-artifact@v4
