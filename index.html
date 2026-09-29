@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="从一根均线到完整技术交易系统：真实历史行情、可调参数、逐笔复盘和期货换月核算。">
+  <meta name="color-scheme" content="dark"><title>CTA Strategy Lab · 看懂一个交易系统</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <script defer src="data/catalog.js"></script><script defer src="assets/engine.js"></script><script defer src="assets/charts.js"></script><script defer src="assets/app.js"></script>
+</head>
+<body>
+<header class="topbar">
+ <a class="brand" href="#"><span class="brand-mark" aria-hidden="true">∿</span><span>CTA <b>STRATEGY LAB</b><small>技术交易系统 · 交互实验室</small></span></a>
+ <nav aria-label="主导航"><a href="#lab" class="nav-active">策略实验室</a><button id="guide-open" class="nav-link">系统是怎样补全的</button><button id="data-nav" class="nav-link">数据与口径</button></nav>
+ <span class="snapshot"><span class="status-dot"></span>历史快照 <span id="snapshot-date">—</span></span>
+</header>
+<div class="hero"><div><div class="eyebrow">FROM A SIGNAL TO A SYSTEM</div><h1>不是找到一条好曲线，<br class="mobile-break">而是看清每一次决策。</h1><p>从一根均线出发，观察问题、改变规则，再回到真实交易中验证。</p></div><button class="outline compact" id="tour-start">从第一课开始 <span>↗</span></button></div>
+<div class="workspace" id="lab">
+ <aside class="sidebar">
+  <section class="control-block"><h2><span>01</span> 选择实验市场</h2>
+   <label for="instrument">标的 <span id="instrument-count"></span></label><select id="instrument"></select>
+   <div class="label-row"><label>时间级别</label><small id="tf-note"></small></div>
+   <div class="segmented" role="group" aria-label="时间级别"><button id="tf-1h" data-tf="1h">小时 1H</button><button id="tf-1d" data-tf="1d" class="active">日线 1D</button></div>
+   <div class="date-fields"><label>开始交易日<input id="start-date" type="date"></label><label>结束交易日<input id="end-date" type="date"></label></div>
+   <div class="quick-dates"><button data-range="365">近1年</button><button data-range="1095">近3年</button><button data-range="all">全部历史</button></div>
+   <label for="direction">交易方向</label><select id="direction"><option value="long">只做多 / 空仓</option><option value="both">多空双向（非期货为理论实验）</option></select>
+  </section>
+  <section class="control-block lessons"><h2><span>02</span> 逐步补全规则</h2><div id="strategy-list"></div></section>
+  <section class="control-block"><h2><span>03</span> 把想法变成参数</h2>
+   <div id="single-params"><label for="n">均线 / 通道周期 N <span class="hint">根K线</span></label><input id="n" type="number" min="2" max="500" value="20"></div>
+   <div id="dual-params" hidden class="two-fields"><label>快线<input id="fast" type="number" min="2" max="499" value="10"></label><label>慢线<input id="slow" type="number" min="3" max="500" value="40"></label></div>
+   <div id="boll-params" hidden><label for="k">通道倍数 K（布林σ / 趋势ATR）</label><input id="k" type="number" min="0.1" max="8" step="0.1" value="2"></div>
+   <div id="st-params" hidden><label for="stVariant">SuperTrend 实现版本</label><select id="stVariant"><option value="hl2">HL2中心＋Wilder ATR · 教学版</option><option value="kama">KAMA中心＋滚动ATR · 研究变体</option></select><p class="micro">KAMA快/慢平滑固定2/30；用完整窗口预热，与原代码初始化不同。</p></div>
+   <p class="micro" id="period-description">20根日线 ≠ 20根小时线。</p>
+   <label for="exposure">每次入场名义仓位</label><select id="exposure"><option value="0.25">25% 本金</option><option value="0.5">50% 本金</option><option value="1" selected>100% 本金 · 不主动加杠杆</option><option value="1.5">150% 本金 · 杠杆理论实验</option><option value="2">200% 本金 · 杠杆理论实验</option></select>
+   <label class="check-label"><input id="stop" type="checkbox"><span>启用独立退出模块<small>保留入场规则，只研究怎样离场</small></span></label>
+   <div id="stop-params" hidden>
+    <label for="exitType">退出方法</label><select id="exitType"><option value="atr">收盘锚定 ATR</option><option value="chandelier">吊灯 · 持仓期间滚动极值−ATR</option><option value="percent">百分比 · 持仓极值回撤</option><option value="invvol">波动率倒数 · 实验定义</option></select>
+    <label for="exitMode">与原退出的关系</label><select id="exitMode"><option value="overlay">叠加：原退出和保护退出，先到先出</option><option value="replace">替换：忽略原退出，只等待新退出</option></select>
+    <div id="atr-exit-params" class="two-fields"><label>ATR周期<input id="atrN" type="number" min="2" max="500" value="14"></label><label>ATR倍数<input id="atrK" type="number" min="0.1" step="0.1" value="3"></label></div>
+    <div id="pct-exit-params" hidden><label>基础回撤比例 %<input id="trailPct" type="number" min="0.1" max="99" step="0.5" value="5"></label></div>
+    <div id="chandelier-params" hidden><label>持仓内极值回看窗口<input id="trailN" type="number" min="2" max="500" value="22"></label></div>
+    <div id="inverse-params" hidden class="two-fields"><label>回撤比例下限 %<input id="invMin" type="number" min="0.1" max="99" value="1"></label><label>回撤比例上限 %<input id="invMax" type="number" min="0.1" max="99" value="20"></label></div>
+    <label for="reentry">保护性退出后</label><select id="reentry"><option value="fresh">等待条件先失效，再重新出现</option><option value="state">条件仍成立即可再次入场</option></select><p class="micro" id="exit-description"></p>
+   </div>
+   <details class="cost-details"><summary>本金与交易摩擦 <span>必计成本</span></summary><label>初始本金<input id="initial" type="number" min="100" value="1000000" step="10000"></label><div class="two-fields"><label>单边手续费 bps<input id="feeBps" type="number" min="0" max="500" value="3" step="0.5"></label><label>单边滑点 bps<input id="slipBps" type="number" min="0" max="500" value="2" step="0.5"></label></div><p class="micro">1 bp = 0.01%。参数是实验假设，不代表交易所当前费率；期货另按最小价位做不利取整。</p></details>
+   <button id="run" class="primary">运行实验 <span>→</span></button><p id="run-status" class="micro" role="status" aria-live="polite">正在载入本地历史数据…</p>
+  </section>
+  <div class="sidebar-note"><span>研究不是曲线美容</span><p>每增加一个规则，都问一次：解决了什么问题，又付出了什么代价？</p></div>
+ </aside>
+ <main class="main-content">
+  <div id="error" class="error" hidden role="alert"></div>
+  <section class="lesson-card"><div class="lesson-kicker"><span id="lesson-step" class="pill">01 / 基准策略</span><span class="engine-note">收盘决策 <b>→</b> 次根开盘执行</span></div><div class="lesson-heading"><div><h2 id="lesson-title">一根均线，就能开始。</h2><p id="lesson-summary"></p></div><span id="lesson-number" class="lesson-number" aria-hidden="true">01</span></div><div class="lesson-insight"><span>这一课看什么</span><p id="lesson-question"></p></div><details class="rule-details"><summary>展开这套策略的准确规则</summary><div class="rules-grid"><div><h3>如何进场</h3><p id="rule-entry"></p></div><div><h3>如何离场</h3><p id="rule-exit"></p></div></div><p class="micro">全窗口先从现金开始；指标可使用窗口前的已知历史预热；窗口末尾统一估值平仓，并单独标记为边界动作。</p></details></section>
+  <div class="stats" id="stats" aria-label="当前回测结果"></div>
+  <div class="data-warning" id="market-warning"></div>
+  <section class="panel chart-panel"><div class="panel-heading"><div><span class="eyebrow">PRICE / SIGNAL / EXECUTION</span><h2 id="chart-title">价格、规则与每一次交易</h2></div><div class="chart-controls"><select id="price-mode" aria-label="图表价格口径"><option value="adjusted">信号价格</option><option value="raw">原始合约价格</option></select><button id="pan-left" title="向前平移">←</button><button id="zoom-in" title="放大">＋</button><button id="zoom-out" title="缩小">−</button><button id="fit" title="显示整个回测窗口">全览</button><button id="pan-right" title="向后平移">→</button></div></div>
+   <div id="chart-legend" class="legend"></div><div class="canvas-wrap"><canvas id="candles"></canvas><div id="chart-tooltip" class="chart-tooltip" hidden></div></div><div class="chart-foot"><span>滚轮缩放 · 拖动平移 · 点击标记或交易行定位</span><span>▲ 入场　● 出场　◆ 换月　<span id="window-label"></span></span></div>
+  </section>
+  <section class="panel performance"><div class="panel-heading"><div><span class="eyebrow">EQUITY / UNDERWATER</span><h2>结果要和过程一起看</h2></div><div class="legend"><span><i class="swatch up"></i>策略净值（计成本）</span><span><i class="swatch benchmark"></i>同口径持续做多</span></div></div><canvas id="equity" aria-label="策略净值和持续做多基准"></canvas><div class="drawdown-caption">资金回撤 <small>相对于此前净值高点</small><span id="extra-stats"></span></div><canvas id="drawdown" aria-label="回撤时间序列"></canvas><p id="result-insight" class="result-insight"></p></section>
+  <div id="warnings" class="warnings"></div>
+  <section class="panel research-panel"><div class="tabs" role="tablist"><button id="tab-trades" data-tab="trades" class="active" role="tab" aria-selected="true">逐笔复盘 <span id="trade-count">0</span></button><button id="tab-compare" data-tab="compare" role="tab" aria-selected="false">规则对比</button><button id="tab-exits" data-tab="exits" role="tab" aria-selected="false">退出对比</button><button id="tab-robustness" data-tab="robustness" role="tab" aria-selected="false">参数稳定性</button><button id="tab-data" data-tab="data" role="tab" aria-selected="false">数据与复权</button></div>
+   <div id="pane-trades" class="tab-pane" role="tabpanel" aria-labelledby="tab-trades"><div class="section-intro"><div><h3>先看一笔交易，再看一条曲线。</h3><p>这些案例由当前结果自动挑选；它们帮助理解规则，不用于证明策略有效。</p></div><button id="export-trades" class="outline">导出交易 CSV ↓</button></div><div id="case-cards" class="case-cards"></div>
+    <div class="ledger-layout"><div><div class="ledger-toolbar"><h3>完整交易账本 <small id="ledger-unit"></small></h3><select id="trade-filter" aria-label="筛选交易"><option value="all">全部交易</option><option value="win">盈利交易</option><option value="loss">亏损交易</option></select></div><div class="table-scroll"><table class="trades-table"><thead><tr><th># / 方向</th><th>入场 → 出场</th><th>净盈亏</th><th>成本</th><th>毛利润回吐</th></tr></thead><tbody id="trades-body"></tbody></table></div><div class="pagination"><button id="prev-page">← 上页</button><span id="page-label"></span><button id="next-page">下页 →</button></div></div><article class="trade-detail" id="trade-detail"><h3>点击一笔交易</h3><p>查看信号、成交、成本及可能的改进方向。</p></article></div>
+   </div>
+   <div id="pane-compare" class="tab-pane" role="tabpanel" aria-labelledby="tab-compare" hidden><div class="section-intro"><div><h3>改变的是规则，不是比较口径。</h3><p>相同标的、窗口、仓位与成本。双均线周期独立设置；这不是参数最优比赛。</p></div><button id="compare-run" class="primary small">比较8种规则</button></div><p class="callout">EMA更敏感不等于更赚钱；双均线也不天然拥有空仓。观察收益、回撤、交易次数、空仓比例的共同变化。</p><div class="table-scroll" id="compare-results"></div></div>
+   <div id="pane-exits" class="tab-pane" role="tabpanel" aria-labelledby="tab-exits" hidden><div class="section-intro"><div><h3>同一个入场想法，怎样退出才合适？</h3><p>固定入场规则、参数、窗口和成本，仅替换退出部件；后续入场时间可能随持仓状态改变，不是逐笔配对实验。</p></div><button id="exits-run" class="primary small">比较5种退出</button></div><p class="callout">吊灯与ATR倍数：波动越大，价格距离越宽。波动率倒数实验：ATR/价格越大，允许回撤比例越小。两者不是同一种逻辑；本版全部退出保护线只在收盘后更新，并单向收紧。</p><div class="table-scroll" id="exits-results"></div></div>
+   <div id="pane-robustness" class="tab-pane" role="tabpanel" aria-labelledby="tab-robustness" hidden><div class="section-intro"><div><h3>好参数应是一片区域，而不是一个孤点。</h3><p>按时间先后划分70%研究段与30%验证段；每段重新从现金开始，指标可用此前历史预热。</p></div><button id="robustness-run" class="primary small">检查相邻参数</button></div><p class="callout">这里只做相邻周期的敏感性诊断，不自动选赢家。反复看过验证段后，它就不再是未接触的样本外；还需要新的时间段和品种。</p><div id="robustness-results"></div></div>
+   <div id="pane-data" class="tab-pane" role="tabpanel" aria-labelledby="tab-data" hidden><div id="data-details"></div></div>
+  </section>
+  <div class="export-row"><span>把本次选择、指标与成交记录一起保存，复盘才可复现。</span><button id="export-experiment" class="outline">导出实验 JSON ↓</button></div>
+ </main>
+</div>
+<footer><div><b>CTA STRATEGY LAB</b><span>原生 Canvas · 本地回测 · 无第三方运行时请求</span></div><p>仅供研究与教学，不构成投资建议。历史回测不保证未来表现；这是一套技术交易系统的研究原型，不是连接券商的实盘系统。</p><a href="docs/METHODOLOGY.md">方法与边界</a> <a href="data/quality-report.json">数据检查记录</a> <a href="README.md">项目说明</a></footer>
+<dialog id="guide"><div class="guide-top"><span class="eyebrow">THE TRADING SYSTEM</span><button id="guide-close" class="outline" autofocus>关闭 ×</button></div><h2>指标只负责描述，<br>规则与执行才组成系统。</h2><p>一个完整的技术系统，不只回答“什么时候买”，还必须回答买多少、何时不做、错了怎么办、如何确认自己没有看错历史。</p><div class="system-grid"><article><span>01 / 假设</span><h3>赚什么钱</h3><p>趋势延续，还是偏离后的回归？不同假设可能对同一条布林线给出相反动作。</p></article><article><span>02 / 信号</span><h3>何时买卖</h3><p>先把含糊判断变成可计算条件。不要把当根收盘信号当作当根开盘前已知。</p></article><article><span>03 / 仓位</span><h3>承担多少风险</h3><p>本版按入场权益分配固定名义仓位；期货取整数手。同一个信号，仓位不同，风险也不同。</p></article><article><span>04 / 执行</span><h3>以什么价格成交</h3><p>下一根开盘、手续费、滑点、零成交量检查；期货实际合约移仓另计双边交易成本。</p></article><article><span>05 / 风控</span><h3>何时离场与等待</h3><p>正常退出、空仓状态、ATR保护性止损各有职责。跳空时不能保证按止损线成交。</p></article><article><span>06 / 研究</span><h3>怎样辨别有效性</h3><p>逐笔复盘、同口径基准、成本后表现、参数附近与不同时间段，而不是只盯历史最高收益。</p></article></div><div class="guide-path">单SMA → EMA → 双均线 → 空仓 → 布林 / SF01 / SuperTrend<br><small>入场、退出和仓位是独立模块；复杂不等于更赚钱。吊灯、百分比及波动率倒数可以单独对照。</small></div><p>基本面、情绪面可以在更完整的体系中解释环境、调整风险预算或过滤交易；本实验室不冒充已经实现这些部分。</p><button id="guide-begin" class="primary">回到实验，从一根均线开始 →</button></dialog>
+<noscript><div class="error">本实验室需要开启JavaScript。所有回测在浏览器本地执行，不需要账户或交易权限。</div></noscript>
+</body></html>

@@ -1,0 +1,1 @@
+{"name":"cta-strategy-lab","version":"1.1.0","private":true,"description":"从单均线到技术交易系统的交互式研究实验室","scripts":{"test":"node --test tests/*.test.js","test:data":"node scripts/audit_data.js","cases":"node scripts/build_cases.js"},"engines":{"node":">=20"},"license":"MIT"}
