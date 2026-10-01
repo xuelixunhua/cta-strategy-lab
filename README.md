@@ -2,11 +2,11 @@
 
 从一根均线到一套可解释的技术交易系统。用实际历史行情观察问题、改变规则，再回到每一笔交易验证。
 
-**版本1.1源码已提交，线上部署尚未完成：目前还缺数据包入库和首次启用Pages。** 源码写入不等于网页上线。具体操作见 [部署说明](docs/DEPLOYMENT.md)。
+**版本1.1已于2026-10-01完成部署与线上浏览器验收。** 打开 [CTA Strategy Lab](https://xuelixunhua.github.io/cta-strategy-lab/) 即可使用。数据包已入库，Pages使用GitHub Actions；验证记录与复现步骤见 [部署说明](docs/DEPLOYMENT.md)。
 
-## 1. 首次发布
+## 1. 发布与复现
 
-先在 [Settings → Pages](https://github.com/xuelixunhua/cta-strategy-lab/settings/pages) 把Source设为 **GitHub Actions**。再将提供的 **cta-public-ohlc-export.zip**（约7.4MB）原样上传到[仓库根目录](https://github.com/xuelixunhua/cta-strategy-lab/upload/main)，不需要解压或上传任何源码。
+当前仓库已在 [Settings → Pages](https://github.com/xuelixunhua/cta-strategy-lab/settings/pages) 将Source设为 **GitHub Actions**，根目录包含核验过的 **cta-public-ohlc-export.zip**（约7.4MB）。无需再次上传或解压；本地克隆可直接按部署说明构建行情。
 
 提交后工作流会校验数据、构建89组行情、测试账目、生成案例并尝试部署。只有Actions中的 **Deploy CTA Strategy Lab** 最后Deploy步骤成功，才可认定目标网址 **https://xuelixunhua.github.io/cta-strategy-lab/** 已上线。
 
@@ -36,7 +36,7 @@
 
 ## 4. 数据、复权与展示
 
-完整行情快照日期2026-09-29，共52个标的、89组标的×周期：BTC/ETH现货、7个A股指数、8个美股/ETF/指数、34个JM实际合约及1个教学连续系列。不是52个独立期货品种。没有小时源的指数和股票禁用小时切换，不制造数据。数据包目前仍需按首节导入。
+完整行情快照日期2026-09-29，共52个标的、89组标的×周期：BTC/ETH现货、7个A股指数、8个美股/ETF/指数、34个JM实际合约及1个教学连续系列。不是52个独立期货品种。没有小时源的指数和股票禁用小时切换，不制造数据。部署工作流从仓库内的固定哈希数据包构建行情。
 
 焦煤信号价格采用因果比例衔接，盈亏按实际旧合约平旧、新合约开新并计两侧摩擦；7次换月有审计记录。有限样本不能称作官方主力连续。股票/ETF全部OHLC统一调整，指数是不可直接成交的价格代理。
 
@@ -53,7 +53,7 @@ node scripts/build_cases.js
 node scripts/build_exit_cases.js
 ```
 
-Node20以上，无npm运行时依赖。本地完整快照已通过36项单元测试、89组数据的1602次全历史实现检查；远端数据验收需要数据导入后运行。这不是策略盈利或实盘可成交性证明。
+Node20以上，无npm运行时依赖。本地与GitHub Actions均已通过36项单元测试、89组数据的1602次全历史实现检查。这不是策略盈利或实盘可成交性证明。
 
 `assets/engine.js` 管规则和账目；`charts.js` 只画图；`app.js` 管交互；`scripts/` 管导出、审计和案例生成；`tests/` 管确定性验证；`docs/` 管准确定义与边界。
 

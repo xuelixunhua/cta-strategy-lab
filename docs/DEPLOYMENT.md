@@ -1,12 +1,16 @@
-# 部署状态与首次发布
+# 部署状态与复现
 
 ## 当前状态
 
-v1.1网站源码、八种入场/基础规则、五种退出对比、测试及数据构建脚本已经提交公有仓库。**不能据此认定网页已上线。** 本次自动发布有两个已验证的阻碍：首次创建Pages站点被GitHub应用权限拒绝；跨平台下载数据专用临时链接返回403，行情包尚未进入公有仓库。
+**v1.1已于2026-10-01上线：** https://xuelixunhua.github.io/cta-strategy-lab/ 。提交 `d861eab2d42bf0b2e3d2eec0ee4577858a2e4f9f` 加入指定数据包；[部署运行36833240635](https://github.com/xuelixunhua/cta-strategy-lab/actions/runs/36833240635) 与 [验证运行36833240636](https://github.com/xuelixunhua/cta-strategy-lab/actions/runs/36833240636) 均成功。
+
+本次核查时Pages已配置为GitHub Actions，最近的失败发生在“Check data input”：仓库缺少指定ZIP。加入与脚本固定SHA256一致的原包后，36项单元测试、89组行情的1602次全历史检查、案例生成和Pages部署均通过。此前的首次启用权限拒绝及临时下载链接403是旧部署记录，不是本次失败原因。
+
+线上Chromium验收覆盖首页、8种策略、4种独立保护退出、BTC小时线、AAPL日线及不可用小时按钮、逐笔定位、缩放/平移、CSV/JSON导出与390px窄屏。验收访问无脚本错误或HTTP失败；K线由Canvas绘制，ZIP包含18份OHLC行情JSON及1份来源清单，并非图片素材。
 
 旧的临时链接导入工作流已移除。最终流程不保存或使用私有GitHub访问令牌，也不让网页访问私有仓库。
 
-## 两项一次性操作
+## 新仓库首次发布（当前仓库已完成）
 
 先打开 https://github.com/xuelixunhua/cta-strategy-lab/settings/pages ，把 Build and deployment 的 Source 设为 **GitHub Actions**。
 
